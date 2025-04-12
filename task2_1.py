@@ -21,62 +21,92 @@ from sklearn.feature_extraction.text import CountVectorizer
 from nltk.stem import WordNetLemmatizer
 
 # ----------------------------------------------------------------------------
-# print(accidents_data)
-# print(accidents_data.columns.tolist())
-
-accidents_data = pd.read_csv('accident.csv')
-print('initial')
 
 # ----------------------------------------------------------------------------
+# root function for task2_1
+def task2_1():
+    accidents_data = pd.read_csv('accident.csv')
+    accidents_data = casefolding_and_noise(accidents_data)
+    accidents_data['DCA_DESC'] = accidents_data['DCA_DESC'].apply(lambda x: stopwords_and_stem(x) if type(x)==str else x)
+    bow = bag_of_words(accidents_data['DCA_DESC'])
+    word_counts = word_counts_dataframe(bow)
+    word_cloud = creating_word_cloud(word_counts)
+    return word_cloud
 
+# ----------------------------------------------------------------------------
 # casefolding for all columns, converting all string values to lowercase
 # noise removal for all columns, removing all non-alphanumeric characters
-for column in accidents_data.columns:
-    accidents_data[column] = accidents_data[column].apply(lambda x: x.lower() if type(x)==str else x)
-    accidents_data[column] = accidents_data[column].apply(lambda x: re.sub(r'[^A-Za-z\s]', '', x) if type(x)==str else x)
-
+def casefolding_and_noise(accidents_data):
+    for column in accidents_data.columns:
+        accidents_data[column] = accidents_data[column].apply(lambda x: x.lower() if type(x)==str else x)
+        accidents_data[column] = accidents_data[column].apply(lambda x: re.sub(r'[^A-Za-z\s]', '', x) if type(x)==str else x)
+    return accidents_data
+#for column in accidents_data.columns:
+#    accidents_data[column] = accidents_data[column].apply(lambda x: x.lower() if type(x)==str else x)
+#    accidents_data[column] = accidents_data[column].apply(lambda x: re.sub(r'[^A-Za-z\s]', '', x) if type(x)==str else x)
 
 # ----------------------------------------------------------------------------
 
 # turning the column accidents_data['DCA_DESC'] into tokens, and remove stop words
-porterStemmer = PorterStemmer()
+porter_stemmer = PorterStemmer()
 def stopwords_and_stem(text):
     tokens = nltk.word_tokenize(text)
     tokens = [word for word in tokens if word not in stop_words]
-    stemmed = ' '.join([porterStemmer.stem(word) for word in tokens])
+    stemmed = ' '.join([porter_stemmer.stem(word) for word in tokens])
     # put non stop words into list and join them back into a string
     #text = ' '.join([word for word in stemmed if word not in stop_words])
     return stemmed
 
-accidents_data['DCA_DESC'] = accidents_data['DCA_DESC'].apply(lambda x: stopwords_and_stem(x) if type(x)==str else x)
 
 # ----------------------------------------------------------------------------
 # bag of words, coverts text into BoW, where the matrix counts the number of times each word appears in the text
 
 vectorizer = CountVectorizer()
-bow = vectorizer.fit_transform(accidents_data['DCA_DESC'])
-vocabulary = vectorizer.get_feature_names_out()
-pd.DataFrame(bow.toarray())
+def bag_of_words(dca_des):
+    bow = vectorizer.fit_transform(dca_des)
+    pd.DataFrame(bow.toarray())
+    return bow
+
+#bow = vectorizer.fit_transform(accidents_data['DCA_DESC'])
+#vocabulary = vectorizer.get_feature_names_out()
+#pd.DataFrame(bow.toarray())
 
 # ----------------------------------------------------------------------------
 # getting most common words in the vectorizer
-word_counts = np.asarray(bow.sum(axis=0)).flatten()
+def word_counts_dataframe(bow):
+    word_counts = np.asarray(bow.sum(axis=0)).flatten()
+    vocabulary = vectorizer.get_feature_names_out()
+    word_counts = pd.DataFrame(word_counts, index=vocabulary, columns=['count'])
+    word_counts = word_counts.sort_values(by='count', ascending=False)
+    return word_counts
 
-# vocab = rows, column = freq, sort by highest frequency
-word_counts = pd.DataFrame(word_counts, index=vocabulary, columns=['count'])
-word_counts = word_counts.sort_values(by='count', ascending=False)
+
+#word_counts = np.asarray(bow.sum(axis=0)).flatten()
+#word_counts = pd.DataFrame(word_counts, index=vocabulary, columns=['count'])
+#word_counts = word_counts.sort_values(by='count', ascending=False)
 
 # word cloud, visualisation of the most common words in the text
-word_cloud = WordCloud(width=800, height=400, background_color='white').generate_from_frequencies(word_counts['count'])
-plt.figure(figsize=(10, 5))
-plt.title('Word Cloud of Most Common Words in DCA_DESC')
-plt.imshow(word_cloud, interpolation='bilinear')
-plt.axis('off')
 
-output_filename = 'task2_1_word_cloud.png'
-plt.savefig(output_filename, dpi=300, bbox_inches='tight')
+def creating_word_cloud(word_counts):
+    word_cloud = WordCloud(width=800, height=400, background_color='white').generate_from_frequencies(word_counts['count'].to_dict())
+    plt.figure(figsize=(10, 5))
+    plt.title('Word Cloud of Most Common Words in DCA_DESC')
+    plt.imshow(word_cloud, interpolation='bilinear')
+    plt.axis('off')
+
+    output_filename = 'task2_1_word_cloud.png'
+    plt.savefig(output_filename, dpi=300, bbox_inches='tight')
+    return word_cloud
 
 
-def task2_1():
+#word_cloud = WordCloud(width=800, height=400, background_color='white').generate_from_frequencies(word_counts['count'])
+#plt.figure(figsize=(10, 5))
+#plt.title('Word Cloud of Most Common Words in DCA_DESC')
+#plt.imshow(word_cloud, interpolation='bilinear')
+#plt.axis('off')
 
-    return 
+#output_filename = 'task2_1_word_cloud.png'
+#plt.savefig(output_filename, dpi=300, bbox_inches='tight')
+
+
+
