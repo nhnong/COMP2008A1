@@ -3,7 +3,10 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+import nltk
 from task2_1 import task2_1
+from collections import Counter
+
 
 MORNING = "Morning"
 AFTERNOON = "Afternoon"
@@ -23,9 +26,17 @@ def task2_2():
 
     # creating the bar chart for the number of accidents per category
     accidents_per_cat_df = accidents_per_category(accidents_data)
-    print(accidents_per_cat_df)
+    # print(accidents_per_cat_df)
 
-    ten_freq_words(accidents_data)
+    words_per_category = ten_freq_words(accidents_data)
+    #print(words_per_category[MORNING])
+    #print(words_per_category[AFTERNOON])
+    #print(words_per_category[EVENING])
+    #print(words_per_category[LATE_NIGHT])
+
+
+    # creating the pie chart for top 10 words per time category
+    pie_chart = create_pie_chart(words_per_category)
 
     return
 
@@ -55,8 +66,53 @@ def accidents_per_category(accidents_data):
     return accidents_per_cat_df
 
 def ten_freq_words(accidents_data):
-    return
-    
-task2_2()
+    most_freq_morning = Counter()
+    most_freq_afternoon = Counter()
+    most_freq_evening = Counter()
+    most_freq_late_night = Counter()
 
+    for i in range(len(accidents_data['TIME_OF_DAY'])):
+        current_time = accidents_data['TIME_OF_DAY'][i]
+        dca_desc = nltk.word_tokenize(accidents_data['DCA_DESC'][i])  
+        if current_time == MORNING:
+            most_freq_morning.update(dca_desc)
+        elif current_time == AFTERNOON:
+            most_freq_afternoon.update(dca_desc)
+        elif current_time == EVENING:
+            most_freq_evening.update(dca_desc)
+        elif current_time == LATE_NIGHT:
+            most_freq_late_night.update(dca_desc) 
+        
+    most_freq_morning = most_freq_morning.most_common(10)
+    most_freq_afternoon = most_freq_afternoon.most_common(10)
+    most_freq_evening = most_freq_evening.most_common(10)
+    most_freq_late_night = most_freq_late_night.most_common(10)   
+
+    return {MORNING: most_freq_morning, AFTERNOON: most_freq_afternoon, EVENING: most_freq_evening, LATE_NIGHT: most_freq_late_night}    
+    
+
+def create_pie_chart(words_per_category):
+    # Create a pie chart for the top 10 words in each category
+    # for item in words_per_category.values():
+    #    label = []
+    #    count = []
+    #    for x, y in item:
+    #        label.append(x)
+    #        count.append(y)
+    #    plt.pie(count, labels=label, autopct='%1.1f%%', startangle=140)
+    #    plt.axis('equal')
+    #    plt.show()
+    fig, axes = plt.subplots(2,2, figsize=(13, 10))
+    axes = axes.flatten()
+    for ax, (time, word_tuple) in zip(axes, words_per_category.items()):
+        labels = [word[0] for word in word_tuple]
+        counts = [word[1] for word in word_tuple]
+        ax.pie(counts, labels=labels, autopct='%1.1f%%', radius=1.0, textprops={'fontsize': 7})
+        ax.set_title(f'{time}: Top 10 Most Frequent Words in DCA_DESC Column')
+    plt.savefig('task2_2_wordpies.png', dpi=300, bbox_inches='tight')
+    plt.show()
+
+    return words_per_category
+
+task2_2()
 print('works')
