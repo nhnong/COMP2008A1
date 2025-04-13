@@ -1,7 +1,9 @@
 import re
 import pandas as pd
 import numpy as np
-import nltk
+import matplotlib.pyplot as plt
+import seaborn as sns
+from task2_1 import task2_1
 
 MORNING = "Morning"
 AFTERNOON = "Afternoon"
@@ -11,12 +13,20 @@ LATE_NIGHT = "Late Night"
 # add new column TIME OF DAY
 
 def task2_2():
-    accidents_data = pd.read_csv('accident.csv')
+    # importing the modified data from tsk2_1
+    # _, accidents_data = task2_1()
+    accidents_data = pd.read_csv('task2_1_accidents.csv')
+
+    # classify accident times into time of day categories in a new column accidents_data['TIME_OF_DAY']
     accidents_data['TIME_OF_DAY'] = None
     accidents_data = classifying_time(accidents_data)
-    # print(accidents_data.columns)
-    print(accidents_data['ACCIDENT_TIME'][0:10])
-    print(accidents_data['TIME_OF_DAY'][0:10])
+
+    # creating the bar chart for the number of accidents per category
+    accidents_per_cat_df = accidents_per_category(accidents_data)
+    print(accidents_per_cat_df)
+
+    ten_freq_words(accidents_data)
+
     return
 
 # assumes that the time of day is in the format HH:MM:SS and matches r'(^\d{2}:\d{2}:\d{2}$)'
@@ -36,6 +46,17 @@ def classifying_time(accidents_data):
                 accidents_data.loc[i, 'TIME_OF_DAY'] = LATE_NIGHT         
     return accidents_data
 
+# calculating the number of accidents per category and creating a new dataframe with the results
+def accidents_per_category(accidents_data):
+    accidents_per_cat_df = accidents_data.groupby('TIME_OF_DAY').size().reset_index(name='COUNT')
+    plt.bar(accidents_per_cat_df['TIME_OF_DAY'], accidents_per_cat_df['COUNT'])
+    plt.title('Number of accidents in each TIME_OF_DAY category')
+    plt.savefig('task2_2_timeofday.png', dpi=300, bbox_inches='tight')
+    return accidents_per_cat_df
+
+def ten_freq_words(accidents_data):
+    return
+    
 task2_2()
 
 print('works')
