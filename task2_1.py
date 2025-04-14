@@ -24,20 +24,21 @@ from nltk.stem import WordNetLemmatizer
 # root function for task2_1, calls other functions to process the data and create a word cloud
 def task2_1():
     accidents_data = pd.read_csv('accident.csv')
-    accidents_data = casefolding_and_noise(accidents_data)
+    # accidents_data = casefolding_and_noise(accidents_data)
+    accidents_data['DCA_DESC'] = accidents_data['DCA_DESC'].apply(lambda x: casefolding_and_noise(x) if type(x)==str else x)
     accidents_data['DCA_DESC'] = accidents_data['DCA_DESC'].apply(lambda x: stopwords_and_stem(x) if type(x)==str else x)
     bow = bag_of_words(accidents_data['DCA_DESC'])
     word_counts = word_counts_dataframe(bow)
     word_cloud = creating_word_cloud(word_counts)
-    return word_cloud
+    accidents_data.to_csv('task2_1_accidents.csv', index=False)
+    return word_cloud, accidents_data
 
 # ----------------------------------------------------------------------------
 # casefolding and noise removal for all columns
-def casefolding_and_noise(accidents_data):
-    for column in accidents_data.columns:
-        accidents_data[column] = accidents_data[column].apply(lambda x: x.lower() if type(x)==str else x)
-        accidents_data[column] = accidents_data[column].apply(lambda x: re.sub(r'[^A-Za-z\s]', '', x) if type(x)==str else x)
-    return accidents_data
+def casefolding_and_noise(text):
+    text = text.lower()
+    text = re.sub(r'[^A-Za-z\s]', '', text)
+    return text
 
 # ----------------------------------------------------------------------------
 # turning the column accidents_data['DCA_DESC'] into tokens, remove stop words and apply stemming
@@ -73,9 +74,7 @@ def creating_word_cloud(word_counts):
     plt.title('Word Cloud of Most Common Words in DCA_DESC')
     plt.imshow(word_cloud, interpolation='bilinear')
     plt.axis('off')
-
-    output_filename = 'task2_1_word_cloud.png'
-    plt.savefig(output_filename, dpi=300, bbox_inches='tight')
+    plt.savefig('task2_1_word_cloud.png', dpi=300, bbox_inches='tight')
     return word_cloud
 
 
